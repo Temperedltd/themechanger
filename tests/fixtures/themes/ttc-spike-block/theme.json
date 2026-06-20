@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "settings": {
+    "color": {
+      "palette": [
+        {
+          "color": "#236b5e",
+          "name": "Block Green",
+          "slug": "ttc-spike-block-green"
+        }
+      ]
+    }
+  }
+}

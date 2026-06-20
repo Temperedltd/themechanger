@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<ruleset name="Tempered Themechanger">
+  <description>WordPress coding standards for the Tempered Themechanger plugin.</description>
+
+  <file>.</file>
+
+  <exclude-pattern>*/node_modules/*</exclude-pattern>
+  <exclude-pattern>*/vendor/*</exclude-pattern>
+  <exclude-pattern>*/.wp-env/*</exclude-pattern>
+  <exclude-pattern>*/.wp-env-home/*</exclude-pattern>
+  <exclude-pattern>*/tests/*</exclude-pattern>
+
+  <arg name="extensions" value="php"/>
+  <arg name="parallel" value="8"/>
+
+  <config name="testVersion" value="8.2-"/>
+
+  <rule ref="WordPress"/>
+  <rule ref="PHPCompatibilityWP"/>
+</ruleset>

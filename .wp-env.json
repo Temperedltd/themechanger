@@ -1,0 +1,16 @@
+{
+  "plugins": [
+    "."
+  ],
+  "themes": [
+    "./tests/fixtures/themes/ttc-spike-base",
+    "./tests/fixtures/themes/ttc-spike-alt",
+    "./tests/fixtures/themes/ttc-spike-child",
+    "./tests/fixtures/themes/ttc-spike-block"
+  ],
+  "config": {
+    "WP_DEBUG": true,
+    "WP_DEBUG_DISPLAY": true,
+    "SCRIPT_DEBUG": true
+  }
+}

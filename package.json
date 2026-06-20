@@ -1,0 +1,15 @@
+{
+  "name": "tempered-themechanger",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local WordPress development tooling for Tempered Themechanger.",
+  "scripts": {
+    "build:zip": "scripts/build-zip.sh",
+    "wp-env:start": "wp-env start",
+    "wp-env:stop": "wp-env stop",
+    "wp-env:destroy": "wp-env destroy"
+  },
+  "devDependencies": {
+    "@wordpress/env": "^10.14.0"
+  }
+}

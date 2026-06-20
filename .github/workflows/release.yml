@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build plugin ZIP and create release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check plugin version change
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          current_version="$(bash scripts/release-build.sh plugin-version tempered-themechanger.php)"
+          previous_file="$RUNNER_TEMP/previous-tempered-themechanger.php"
+          before_sha="${{ github.event.before }}"
+          release_exists="false"
+
+          if [[ ! "$before_sha" =~ ^0+$ ]] && git cat-file -e "$before_sha:tempered-themechanger.php" 2>/dev/null; then
+            git show "$before_sha:tempered-themechanger.php" > "$previous_file"
+          fi
+
+          if gh release view "$current_version" >/dev/null 2>&1; then
+            release_exists="true"
+          fi
+
+          should_release="$(bash scripts/release-build.sh release-needed tempered-themechanger.php "$previous_file" "$release_exists")"
+
+          echo "version=$current_version" >> "$GITHUB_OUTPUT"
+          echo "should_release=$should_release" >> "$GITHUB_OUTPUT"
+
+      - name: Skip unchanged version
+        if: steps.version.outputs.should_release != 'true'
+        run: echo "Plugin version did not change and release already exists; release skipped."
+
+      - name: Extract release notes
+        if: steps.version.outputs.should_release == 'true'
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          bash scripts/release-build.sh release-notes CHANGELOG.md "$RELEASE_VERSION" > "$RUNNER_TEMP/release-notes.md"
+
+      - name: Build production ZIP
+        if: steps.version.outputs.should_release == 'true'
+        id: build
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/release"
+          zip_path="$(bash scripts/release-build.sh build-zip "$GITHUB_WORKSPACE" "$RUNNER_TEMP/release" "$RELEASE_VERSION")"
+          echo "zip_path=$zip_path" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        if: steps.version.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          ZIP_PATH: ${{ steps.build.outputs.zip_path }}
+        shell: bash
+        run: |
+          gh release create "$RELEASE_VERSION" \
+            "$ZIP_PATH" \
+            --title "$RELEASE_VERSION" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"
