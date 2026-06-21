@@ -7,6 +7,7 @@
 
 namespace TemperedThemeChanger\Admin\PostMetaBox;
 
+use function TemperedThemeChanger\Access\can_change_post_theme;
 use function TemperedThemeChanger\Storage\sanitize_theme_slug;
 use function TemperedThemeChanger\Themes\is_invalid_selection;
 use function TemperedThemeChanger\Themes\theme_choices;
@@ -30,9 +31,16 @@ function bootstrap(): void {
  * Adds the classic editor meta box.
  *
  * @param string $post_type Post type.
+ * @param object $post      Post object.
  */
-function add_meta_boxes( string $post_type ): void {
+function add_meta_boxes( string $post_type, ?object $post = null ): void {
 	if ( ! in_array( $post_type, supported_post_type_names(), true ) ) {
+		return;
+	}
+
+	$post_id = is_object( $post ) && isset( $post->ID ) ? absint( $post->ID ) : 0;
+
+	if ( ! can_change_post_theme( $post_id ) ) {
 		return;
 	}
 
@@ -51,6 +59,10 @@ function add_meta_boxes( string $post_type ): void {
  * @param \WP_Post $post Post object.
  */
 function render_meta_box( \WP_Post $post ): void {
+	if ( ! can_change_post_theme( $post->ID ) ) {
+		return;
+	}
+
 	$selected = (string) get_post_meta( $post->ID, META_KEY, true );
 
 	wp_nonce_field( NONCE_ACTION, NONCE_NAME );
@@ -96,7 +108,7 @@ function save_post( int $post_id, \WP_Post $post ): void {
 		return;
 	}
 
-	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+	if ( ! can_change_post_theme( $post_id ) ) {
 		return;
 	}
 
@@ -120,6 +132,10 @@ function enqueue_block_editor_assets(): void {
 		return;
 	}
 
+	if ( ! can_change_post_theme( current_editor_post_id() ) ) {
+		return;
+	}
+
 	wp_enqueue_script(
 		'tempered-themechanger-editor-sidebar',
 		TEMPERED_THEMECHANGER_URL . 'assets/js/editor-sidebar.js',
@@ -136,6 +152,17 @@ function enqueue_block_editor_assets(): void {
 			'themes'  => theme_choices(),
 		)
 	);
+}
+
+/**
+ * Returns the post ID for the current editor request.
+ */
+function current_editor_post_id(): int {
+	if ( ! isset( $_GET['post'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return 0;
+	}
+
+	return absint( wp_unslash( $_GET['post'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 }
 
 /**

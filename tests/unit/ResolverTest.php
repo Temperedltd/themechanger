@@ -19,7 +19,11 @@ final class ResolverTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
-		unset( $GLOBALS['ttc_test_themes'] );
+		unset(
+			$GLOBALS['ttc_test_themes'],
+			$GLOBALS['ttc_test_options'],
+			$GLOBALS['tempered_themechanger_theme_cache']
+		);
 	}
 
 	private function load_resolver(): void {
@@ -34,6 +38,8 @@ final class ResolverTest extends TestCase {
 		require_once $theme_file;
 		require_once $storage_file;
 		require_once $resolver_file;
+
+		TemperedThemeChanger\Themes\clear_cache();
 	}
 
 	public function test_post_theme_takes_precedence_over_term_and_default(): void {
@@ -90,6 +96,30 @@ final class ResolverTest extends TestCase {
 					'post_theme'        => 'missing-theme',
 					'term_theme'        => '',
 					'post_type_default' => 'also-missing',
+				)
+			)
+		);
+	}
+
+	public function test_disallowed_post_theme_falls_back_to_active_theme(): void {
+		$GLOBALS['ttc_test_options']['tempered_themechanger_settings'] = array(
+			'theme_allow_list' => array( 'child-theme' ),
+		);
+
+		$this->load_resolver();
+
+		self::assertSame(
+			array(
+				'stylesheet' => 'parent-theme',
+				'template'   => 'parent-theme',
+			),
+			TemperedThemeChanger\Resolver\resolve_theme(
+				array(
+					'active_stylesheet' => 'parent-theme',
+					'active_template'   => 'parent-theme',
+					'post_theme'        => 'alt-theme',
+					'term_theme'        => '',
+					'post_type_default' => '',
 				)
 			)
 		);

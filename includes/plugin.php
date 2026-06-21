@@ -9,7 +9,10 @@ namespace TemperedThemeChanger\Plugin;
 
 defined( 'ABSPATH' ) || exit;
 
+require_once TEMPERED_THEMECHANGER_PATH . 'includes/constants.php';
 require_once TEMPERED_THEMECHANGER_PATH . 'includes/themes.php';
+require_once TEMPERED_THEMECHANGER_PATH . 'includes/access.php';
+require_once TEMPERED_THEMECHANGER_PATH . 'includes/roles.php';
 require_once TEMPERED_THEMECHANGER_PATH . 'includes/storage.php';
 require_once TEMPERED_THEMECHANGER_PATH . 'includes/resolver.php';
 require_once TEMPERED_THEMECHANGER_PATH . 'includes/runtime.php';
@@ -28,6 +31,7 @@ function bootstrap(): void {
 	add_action( 'init', \TemperedThemeChanger\Storage\register( ... ) );
 
 	\TemperedThemeChanger\Runtime\bootstrap();
+	\TemperedThemeChanger\Roles\bootstrap();
 	\TemperedThemeChanger\Admin\PostMetaBox\bootstrap();
 	\TemperedThemeChanger\Admin\TermFields\bootstrap();
 	\TemperedThemeChanger\Admin\SettingsPage\bootstrap();

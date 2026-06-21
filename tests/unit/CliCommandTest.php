@@ -172,7 +172,8 @@ final class CliCommandTest extends TestCase {
 			$GLOBALS['ttc_delete_post_meta_calls'],
 			$GLOBALS['ttc_test_options'],
 			$GLOBALS['ttc_update_option_calls'],
-			$GLOBALS['ttc_test_post_type_objects']
+			$GLOBALS['ttc_test_post_type_objects'],
+			$GLOBALS['tempered_themechanger_theme_cache']
 		);
 	}
 
@@ -188,6 +189,8 @@ final class CliCommandTest extends TestCase {
 		require_once $theme_file;
 		require_once $storage_file;
 		require_once $cli_file;
+
+		TemperedThemeChanger\Themes\clear_cache();
 	}
 
 	public function test_bootstrap_registers_theme_changer_command(): void {
@@ -199,6 +202,9 @@ final class CliCommandTest extends TestCase {
 		self::assertArrayHasKey( 'theme-changer get-default', WP_CLI::$commands );
 		self::assertArrayHasKey( 'theme-changer set-default', WP_CLI::$commands );
 		self::assertArrayHasKey( 'theme-changer clear-default', WP_CLI::$commands );
+		self::assertArrayHasKey( 'theme-changer get-allow-list', WP_CLI::$commands );
+		self::assertArrayHasKey( 'theme-changer add-allowed-theme', WP_CLI::$commands );
+		self::assertArrayHasKey( 'theme-changer remove-allowed-theme', WP_CLI::$commands );
 	}
 
 	public function test_sets_theme_for_post_id(): void {
@@ -224,6 +230,21 @@ final class CliCommandTest extends TestCase {
 
 		$command = new TemperedThemeChanger\CLI\Command();
 		$command->set( array( '123', 'missing-theme' ), array() );
+	}
+
+	public function test_set_rejects_disallowed_theme(): void {
+		$GLOBALS['ttc_test_options']['tempered_themechanger_settings'] = array(
+			'post_type_defaults' => array(),
+			'theme_allow_list'   => array( 'parent-theme' ),
+		);
+
+		$this->load_cli();
+
+		$this->expectException( RuntimeException::class );
+		$this->expectExceptionMessage( 'Theme not allowed: child-theme' );
+
+		$command = new TemperedThemeChanger\CLI\Command();
+		$command->set( array( '123', 'child-theme' ), array() );
 	}
 
 	public function test_clears_theme_for_post_id(): void {
@@ -268,12 +289,28 @@ final class CliCommandTest extends TestCase {
 						'post_type_defaults' => array(
 							'post' => 'child-theme',
 						),
+						'theme_allow_list'   => array(),
 					),
 				),
 			),
 			$GLOBALS['ttc_update_option_calls']
 		);
 		self::assertSame( array( 'Set default theme for post to child-theme.' ), WP_CLI::$successes );
+	}
+
+	public function test_set_default_rejects_disallowed_theme(): void {
+		$GLOBALS['ttc_test_options']['tempered_themechanger_settings'] = array(
+			'post_type_defaults' => array(),
+			'theme_allow_list'   => array( 'parent-theme' ),
+		);
+
+		$this->load_cli();
+
+		$this->expectException( RuntimeException::class );
+		$this->expectExceptionMessage( 'Theme not allowed: child-theme' );
+
+		$command = new TemperedThemeChanger\CLI\Command();
+		$command->set_default( array( 'post', 'child-theme' ), array() );
 	}
 
 	public function test_clears_post_type_default_theme(): void {
@@ -297,11 +334,103 @@ final class CliCommandTest extends TestCase {
 						'post_type_defaults' => array(
 							'page' => 'parent-theme',
 						),
+						'theme_allow_list'   => array(),
 					),
 				),
 			),
 			$GLOBALS['ttc_update_option_calls']
 		);
 		self::assertSame( array( 'Cleared default theme for post.' ), WP_CLI::$successes );
+	}
+
+	public function test_get_allow_list_outputs_all_themes_when_list_is_empty(): void {
+		$this->load_cli();
+
+		$command = new TemperedThemeChanger\CLI\Command();
+
+		self::assertTrue( method_exists( $command, 'get_allow_list' ) );
+
+		$command->get_allow_list( array(), array() );
+
+		self::assertSame( array( 'all-themes' ), WP_CLI::$lines );
+	}
+
+	public function test_get_allow_list_outputs_allowed_theme_stylesheets(): void {
+		$GLOBALS['ttc_test_options']['tempered_themechanger_settings'] = array(
+			'post_type_defaults' => array(),
+			'theme_allow_list'   => array( 'child-theme', 'parent-theme' ),
+		);
+
+		$this->load_cli();
+
+		$command = new TemperedThemeChanger\CLI\Command();
+
+		self::assertTrue( method_exists( $command, 'get_allow_list' ) );
+
+		$command->get_allow_list( array(), array() );
+
+		self::assertSame( array( 'child-theme', 'parent-theme' ), WP_CLI::$lines );
+	}
+
+	public function test_add_allowed_theme_updates_allow_list_and_preserves_defaults(): void {
+		$GLOBALS['ttc_test_options']['tempered_themechanger_settings'] = array(
+			'post_type_defaults' => array(
+				'post' => 'parent-theme',
+			),
+			'theme_allow_list'   => array( 'parent-theme' ),
+		);
+
+		$this->load_cli();
+
+		$command = new TemperedThemeChanger\CLI\Command();
+
+		self::assertTrue( method_exists( $command, 'add_allowed_theme' ) );
+
+		$command->add_allowed_theme( array( 'child-theme' ), array() );
+
+		self::assertSame(
+			array(
+				array(
+					'tempered_themechanger_settings',
+					array(
+						'post_type_defaults' => array(
+							'post' => 'parent-theme',
+						),
+						'theme_allow_list'   => array( 'child-theme', 'parent-theme' ),
+					),
+				),
+			),
+			$GLOBALS['ttc_update_option_calls']
+		);
+		self::assertSame( array( 'Added child-theme to the theme allow-list.' ), WP_CLI::$successes );
+	}
+
+	public function test_remove_allowed_theme_updates_allow_list(): void {
+		$GLOBALS['ttc_test_options']['tempered_themechanger_settings'] = array(
+			'post_type_defaults' => array(),
+			'theme_allow_list'   => array( 'child-theme' ),
+		);
+
+		$this->load_cli();
+
+		$command = new TemperedThemeChanger\CLI\Command();
+
+		self::assertTrue( method_exists( $command, 'remove_allowed_theme' ) );
+
+		$command->remove_allowed_theme( array( 'child-theme' ), array() );
+
+		self::assertSame(
+			array(
+				array(
+					'tempered_themechanger_settings',
+					array(
+						'post_type_defaults' => array(),
+						'theme_allow_list'   => array(),
+					),
+				),
+			),
+			$GLOBALS['ttc_update_option_calls']
+		);
+		self::assertSame( array( 'Removed child-theme from the theme allow-list.' ), WP_CLI::$successes );
 	}
 }

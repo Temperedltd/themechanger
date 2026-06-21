@@ -16,7 +16,7 @@ This means a site can keep one active theme while using another (or go crazy and
 
 WordPress by default has a single active theme at one time, if you change the theme it occurs sitewide. Theme Changer was born after a need to perform a slow migration from a classic theme to a FSE based solution with parts of the site on the old theme and parts on the new. However it can work for a range of scenarios, separating different brands, campaigns or teams.
 
-Editors can choose a theme for individual supported content as long as they also have the ability to select a theme, and administrators can set defaults by post type.
+Editors can choose a theme for individual supported content when they can edit that content and have either `switch_themes` or `use_theme_changer`. Administrators can set defaults by post type, optionally restrict selectable themes to an allow-list, and add `use_theme_changer` to existing roles.
 
 ## What It Does
 
@@ -25,10 +25,33 @@ The plugin adds theme selection controls for supported WordPress content and res
 - Supports per-post, page, public custom post type, and WooCommerce product theme overrides.
 - Supports individual public taxonomy term archive overrides within the documented runtime limits.
 - Adds default theme selection by public post type under Appearance > Theme Changer.
+- Adds an optional global theme allow-list for Theme Changer selections.
+- Adds role controls for delegating `use_theme_changer` to existing roles that do not already have `switch_themes`.
 - Adds controls for the classic editor and block editor.
-- Provides WP-CLI commands for managing individual content overrides and post type defaults.
+- Provides WP-CLI commands for managing individual content overrides, post type defaults, and the theme allow-list.
 - Uses WordPress' allowed-theme APIs so theme lists remain multisite-aware.
 - Disables runtime theme switching during WP-CLI execution so command-line jobs do not load alternate themes.
+
+## Permissions
+
+Users with `switch_themes` always have access to Theme Changer controls. Non-admin users can be delegated object-level use with the custom `use_theme_changer` capability, but they must still be able to edit the specific post, page, product, or custom post type item.
+
+The Appearance > Theme Changer screen lists editable roles. Roles that already have `switch_themes` are shown as already able to use Theme Changer. Other roles can be checked to add `use_theme_changer`, or unchecked to remove it.
+
+Developers can add a final object-level veto with:
+
+```php
+add_filter(
+	'tempered_themechanger_user_can_change_post_theme',
+	static function ( bool $allowed, int $post_id, int $user_id ): bool {
+		return $allowed;
+	},
+	10,
+	3
+);
+```
+
+The filter can narrow access for specific posts or users, but it cannot grant access when the user fails the baseline post edit and `switch_themes` / `use_theme_changer` capability checks.
 
 ### Runtime Limits
 
