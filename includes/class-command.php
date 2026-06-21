@@ -8,6 +8,9 @@
 namespace TemperedThemeChanger\CLI;
 
 use function TemperedThemeChanger\Storage\default_settings;
+use function TemperedThemeChanger\Storage\sanitize_settings;
+use function TemperedThemeChanger\Storage\sanitize_theme_allow_list;
+use function TemperedThemeChanger\Themes\is_theme_switchable;
 use function TemperedThemeChanger\Themes\normalize_stylesheet;
 use function TemperedThemeChanger\Themes\theme_exists;
 use const TemperedThemeChanger\Storage\META_KEY;
@@ -46,7 +49,7 @@ final class Command {
 		unset( $assoc_args );
 
 		$post_id = $this->post_id_arg( $args[0] ?? '' );
-		$theme   = $this->theme_arg( $args[1] ?? '' );
+		$theme   = $this->switchable_theme_arg( $args[1] ?? '' );
 
 		$this->post_or_error( $post_id );
 
@@ -103,7 +106,7 @@ final class Command {
 		unset( $assoc_args );
 
 		$post_type = $this->post_type_arg( $args[0] ?? '' );
-		$theme     = $this->theme_arg( $args[1] ?? '' );
+		$theme     = $this->switchable_theme_arg( $args[1] ?? '' );
 		$settings  = $this->settings();
 
 		$settings['post_type_defaults'][ $post_type ] = $theme;
@@ -131,6 +134,71 @@ final class Command {
 	}
 
 	/**
+	 * Gets the theme allow-list.
+	 *
+	 * @param string[]              $args       Positional arguments.
+	 * @param array<string, string> $assoc_args Associative arguments.
+	 */
+	public function get_allow_list( array $args, array $assoc_args ): void {
+		unset( $args, $assoc_args );
+
+		$settings   = $this->settings();
+		$allow_list = $settings['theme_allow_list'];
+
+		if ( array() === $allow_list ) {
+			\WP_CLI::line( 'all-themes' );
+			return;
+		}
+
+		foreach ( $allow_list as $theme ) {
+			\WP_CLI::line( $theme );
+		}
+	}
+
+	/**
+	 * Adds a theme to the allow-list.
+	 *
+	 * @param string[]              $args       Positional arguments.
+	 * @param array<string, string> $assoc_args Associative arguments.
+	 */
+	public function add_allowed_theme( array $args, array $assoc_args ): void {
+		unset( $assoc_args );
+
+		$theme    = $this->theme_arg( $args[0] ?? '' );
+		$settings = $this->settings();
+
+		$settings['theme_allow_list'][] = $theme;
+		$settings['theme_allow_list']   = sanitize_theme_allow_list( $settings['theme_allow_list'] );
+		$this->update_settings( $settings );
+
+		\WP_CLI::success( sprintf( 'Added %s to the theme allow-list.', $theme ) );
+	}
+
+	/**
+	 * Removes a theme from the allow-list.
+	 *
+	 * @param string[]              $args       Positional arguments.
+	 * @param array<string, string> $assoc_args Associative arguments.
+	 */
+	public function remove_allowed_theme( array $args, array $assoc_args ): void {
+		unset( $assoc_args );
+
+		$theme    = $this->theme_arg( $args[0] ?? '' );
+		$settings = $this->settings();
+
+		$settings['theme_allow_list'] = array_values(
+			array_filter(
+				$settings['theme_allow_list'],
+				static fn ( string $allowed_theme ): bool => $theme !== $allowed_theme
+			)
+		);
+		$settings['theme_allow_list'] = sanitize_theme_allow_list( $settings['theme_allow_list'] );
+		$this->update_settings( $settings );
+
+		\WP_CLI::success( sprintf( 'Removed %s from the theme allow-list.', $theme ) );
+	}
+
+	/**
 	 * Returns a valid post ID argument.
 	 *
 	 * @param string $value Raw argument.
@@ -155,6 +223,21 @@ final class Command {
 
 		if ( '' === $theme || ! theme_exists( $theme ) ) {
 			\WP_CLI::error( sprintf( 'Theme not found: %s', $value ) );
+		}
+
+		return $theme;
+	}
+
+	/**
+	 * Returns a valid switchable theme stylesheet argument.
+	 *
+	 * @param string $value Raw argument.
+	 */
+	private function switchable_theme_arg( string $value ): string {
+		$theme = $this->theme_arg( $value );
+
+		if ( ! is_theme_switchable( $theme ) ) {
+			\WP_CLI::error( sprintf( 'Theme not allowed: %s', $theme ) );
 		}
 
 		return $theme;
@@ -208,28 +291,26 @@ final class Command {
 	/**
 	 * Returns stored settings.
 	 *
-	 * @return array{post_type_defaults: array<string, string>}
+	 * @return array{post_type_defaults: array<string, string>, theme_allow_list: string[]}
 	 */
 	private function settings(): array {
 		$settings = function_exists( 'get_option' ) ? get_option( OPTION_NAME, default_settings() ) : default_settings();
 
-		if ( ! is_array( $settings ) || ! isset( $settings['post_type_defaults'] ) || ! is_array( $settings['post_type_defaults'] ) ) {
+		if ( ! is_array( $settings ) ) {
 			return default_settings();
 		}
 
-		return array(
-			'post_type_defaults' => $settings['post_type_defaults'],
-		);
+		return sanitize_settings( $settings );
 	}
 
 	/**
 	 * Persists settings.
 	 *
-	 * @param array{post_type_defaults: array<string, string>} $settings Settings.
+	 * @param array{post_type_defaults: array<string, string>, theme_allow_list: string[]} $settings Settings.
 	 */
 	private function update_settings( array $settings ): void {
 		if ( function_exists( 'update_option' ) ) {
-			update_option( OPTION_NAME, $settings );
+			update_option( OPTION_NAME, sanitize_settings( $settings ) );
 		}
 	}
 }

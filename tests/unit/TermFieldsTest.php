@@ -21,7 +21,12 @@ if ( ! function_exists( 'get_taxonomy' ) ) {
 
 final class TermFieldsTest extends TestCase {
 	protected function tearDown(): void {
-		unset( $GLOBALS['ttc_current_user_can_calls'], $GLOBALS['ttc_current_user_can_result'], $GLOBALS['ttc_test_taxonomies'] );
+		unset(
+			$GLOBALS['ttc_current_user_can_calls'],
+			$GLOBALS['ttc_current_user_can_result'],
+			$GLOBALS['ttc_test_taxonomies'],
+			$GLOBALS['tempered_themechanger_theme_cache']
+		);
 	}
 
 	private function load_term_fields(): void {
@@ -30,6 +35,10 @@ final class TermFieldsTest extends TestCase {
 		self::assertFileExists( $term_fields_file );
 
 		require_once $term_fields_file;
+
+		if ( function_exists( 'TemperedThemeChanger\Themes\clear_cache' ) ) {
+			TemperedThemeChanger\Themes\clear_cache();
+		}
 	}
 
 	public function test_filters_supported_taxonomy_names(): void {

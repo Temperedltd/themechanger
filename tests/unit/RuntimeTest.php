@@ -19,7 +19,13 @@ if ( ! function_exists( 'current_user_can' ) ) {
 
 final class RuntimeTest extends TestCase {
 	protected function tearDown(): void {
-		unset( $GLOBALS['ttc_current_user_can_calls'], $GLOBALS['ttc_current_user_can_result'] );
+		unset(
+			$GLOBALS['ttc_current_user_can_calls'],
+			$GLOBALS['ttc_current_user_can_result'],
+			$GLOBALS['tempered_themechanger_runtime_cache'],
+			$_GET,
+			$_POST
+		);
 	}
 
 	private function load_runtime(): void {
@@ -124,5 +130,22 @@ final class RuntimeTest extends TestCase {
 			),
 			$GLOBALS['ttc_current_user_can_calls']
 		);
+	}
+
+	public function test_resolution_cache_key_ignores_unrelated_request_values(): void {
+		$this->load_runtime();
+
+		$_GET = array(
+			'post'    => '123',
+			'content' => str_repeat( 'a', 1000 ),
+		);
+		$first_key = TemperedThemeChanger\Runtime\current_resolution_cache_key();
+
+		$_GET = array(
+			'post'    => '123',
+			'content' => str_repeat( 'b', 1000 ),
+		);
+
+		self::assertSame( $first_key, TemperedThemeChanger\Runtime\current_resolution_cache_key() );
 	}
 }

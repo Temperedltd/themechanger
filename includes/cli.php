@@ -25,4 +25,7 @@ function bootstrap(): void {
 	\WP_CLI::add_command( 'theme-changer get-default', array( $command, 'get_default' ) );
 	\WP_CLI::add_command( 'theme-changer set-default', array( $command, 'set_default' ) );
 	\WP_CLI::add_command( 'theme-changer clear-default', array( $command, 'clear_default' ) );
+	\WP_CLI::add_command( 'theme-changer get-allow-list', array( $command, 'get_allow_list' ) );
+	\WP_CLI::add_command( 'theme-changer add-allowed-theme', array( $command, 'add_allowed_theme' ) );
+	\WP_CLI::add_command( 'theme-changer remove-allowed-theme', array( $command, 'remove_allowed_theme' ) );
 }

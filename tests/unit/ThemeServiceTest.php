@@ -54,7 +54,15 @@ final class ThemeServiceTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
-		unset( $GLOBALS['ttc_is_multisite'], $GLOBALS['ttc_test_themes'], $GLOBALS['ttc_wp_get_themes_args'] );
+		unset(
+			$GLOBALS['ttc_get_option_calls'],
+			$GLOBALS['ttc_is_multisite'],
+			$GLOBALS['ttc_test_themes'],
+			$GLOBALS['ttc_wp_get_themes_args'],
+			$GLOBALS['ttc_wp_get_themes_calls'],
+			$GLOBALS['ttc_test_options'],
+			$GLOBALS['tempered_themechanger_theme_cache']
+		);
 	}
 
 	private function load_theme_service(): void {
@@ -63,6 +71,8 @@ final class ThemeServiceTest extends TestCase {
 		self::assertFileExists( $theme_file );
 
 		require_once $theme_file;
+
+		TemperedThemeChanger\Themes\clear_cache();
 	}
 
 	public function test_validates_installed_theme_stylesheets(): void {
@@ -104,5 +114,63 @@ final class ThemeServiceTest extends TestCase {
 		self::assertFalse( TemperedThemeChanger\Themes\is_invalid_selection( '' ) );
 		self::assertFalse( TemperedThemeChanger\Themes\is_invalid_selection( 'child-theme' ) );
 		self::assertTrue( TemperedThemeChanger\Themes\is_invalid_selection( 'missing-theme' ) );
+	}
+
+	public function test_theme_choices_return_all_installed_themes_without_allow_list(): void {
+		$this->load_theme_service();
+
+		self::assertSame(
+			array(
+				'child-theme'  => 'Child Theme',
+				'parent-theme' => 'Parent Theme',
+			),
+			TemperedThemeChanger\Themes\theme_choices()
+		);
+	}
+
+	public function test_theme_choices_can_be_limited_to_allow_list(): void {
+		$GLOBALS['ttc_test_options']['tempered_themechanger_settings'] = array(
+			'theme_allow_list' => array( 'child-theme' ),
+		);
+
+		$this->load_theme_service();
+
+		self::assertSame(
+			array(
+				'child-theme' => 'Child Theme',
+			),
+			TemperedThemeChanger\Themes\theme_choices()
+		);
+		self::assertSame(
+			array(
+				'child-theme'  => 'Child Theme',
+				'parent-theme' => 'Parent Theme',
+			),
+			TemperedThemeChanger\Themes\theme_choices( false )
+		);
+		self::assertTrue( TemperedThemeChanger\Themes\is_theme_switchable( 'child-theme' ) );
+		self::assertFalse( TemperedThemeChanger\Themes\is_theme_switchable( 'parent-theme' ) );
+	}
+
+	public function test_theme_choices_reads_theme_allow_list_once_per_call(): void {
+		$GLOBALS['ttc_test_options']['tempered_themechanger_settings'] = array(
+			'theme_allow_list' => array( 'child-theme' ),
+		);
+
+		$this->load_theme_service();
+
+		TemperedThemeChanger\Themes\theme_choices();
+
+		self::assertCount( 1, $GLOBALS['ttc_get_option_calls'] );
+	}
+
+	public function test_disallowed_theme_selection_is_invalid(): void {
+		$GLOBALS['ttc_test_options']['tempered_themechanger_settings'] = array(
+			'theme_allow_list' => array( 'child-theme' ),
+		);
+
+		$this->load_theme_service();
+
+		self::assertTrue( TemperedThemeChanger\Themes\is_invalid_selection( 'parent-theme' ) );
 	}
 }

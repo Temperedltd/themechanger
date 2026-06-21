@@ -39,7 +39,7 @@ function filter_stylesheet( string|false $stylesheet ): string|false {
 		return $stylesheet;
 	}
 
-	$selected_theme = resolve_selected_theme( current_resolution_context() );
+	$selected_theme = current_selected_theme();
 
 	return null === $selected_theme ? $stylesheet : $selected_theme['stylesheet'];
 }
@@ -55,7 +55,7 @@ function filter_template( string|false $template ): string|false {
 		return $template;
 	}
 
-	$selected_theme = resolve_selected_theme( current_resolution_context() );
+	$selected_theme = current_selected_theme();
 
 	return null === $selected_theme ? $template : $selected_theme['template'];
 }
@@ -143,6 +143,74 @@ function current_resolution_context(): array {
 		'term_theme'        => 0 < $term_id && function_exists( 'get_term_meta' ) ? get_term_meta( $term_id, META_KEY, true ) : '',
 		'post_type_default' => '' === $post_type ? '' : post_type_default_theme( $post_type ),
 	);
+}
+
+/**
+ * Resolves the selected theme once for each stable request context.
+ *
+ * @return array{stylesheet: string, template: string}|null
+ */
+function current_selected_theme(): ?array {
+	$cache_key = current_resolution_cache_key();
+
+	if ( array_key_exists( $cache_key, $GLOBALS['tempered_themechanger_runtime_cache'] ?? array() ) ) {
+		return $GLOBALS['tempered_themechanger_runtime_cache'][ $cache_key ];
+	}
+
+	$selected_theme = resolve_selected_theme( current_resolution_context() );
+
+	$GLOBALS['tempered_themechanger_runtime_cache'][ $cache_key ] = $selected_theme;
+
+	return $selected_theme;
+}
+
+/**
+ * Builds a cache key for the current resolution context.
+ */
+function current_resolution_cache_key(): string {
+	$context = current_context_flags();
+	$request = resolution_request_values( request_values() );
+
+	$key_parts = array(
+		$context,
+		$request,
+		query_conditionals_are_available(),
+	);
+
+	if ( query_conditionals_are_available() ) {
+		if ( function_exists( 'get_queried_object_id' ) ) {
+			$key_parts[] = absint( get_queried_object_id() );
+		}
+
+		if ( function_exists( 'get_queried_object' ) ) {
+			$queried_object = get_queried_object();
+			$key_parts[]    = is_object( $queried_object ) && isset( $queried_object->term_id )
+				? absint( $queried_object->term_id )
+				: 0;
+		}
+	}
+
+	$encoded_key = wp_json_encode( $key_parts );
+
+	return md5( false === $encoded_key ? '' : $encoded_key );
+}
+
+/**
+ * Returns only request values used during theme resolution.
+ *
+ * @param array<string, mixed> $request Request values.
+ * @return array<string, int>
+ */
+function resolution_request_values( array $request ): array {
+	$values = array();
+
+	foreach ( array( 'p', 'page_id', 'preview_id', 'post', 'post_ID', 'id' ) as $key ) {
+		if ( isset( $request[ $key ] ) ) {
+			$values[ $key ] = absint( $request[ $key ] );
+		}
+	}
+
+	return $values;
 }
 
 /**
