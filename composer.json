@@ -1,0 +1,26 @@
+{
+    "name": "tempered/themechanger",
+    "description": "A WordPress plugin workspace for Theme Changer.",
+    "type": "wordpress-plugin",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.2"
+    },
+    "require-dev": {
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "phpcompatibility/phpcompatibility-wp": "^2.1",
+        "phpunit/phpunit": "^10.5",
+        "wp-coding-standards/wpcs": "^3.1"
+    },
+    "scripts": {
+        "lint": "phpcs",
+        "lint:php": "find . -path ./vendor -prune -o -path ./node_modules -prune -o -path ./.wp-env-home -prune -o -name '*.php' -print0 | xargs -0 -n1 php -l",
+        "test": "phpunit"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "sort-packages": true
+    }
+}

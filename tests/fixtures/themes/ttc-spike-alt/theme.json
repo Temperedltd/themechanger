@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "settings": {
+    "color": {
+      "palette": [
+        {
+          "color": "#8c2f39",
+          "name": "Alt Red",
+          "slug": "ttc-spike-alt-red"
+        }
+      ]
+    }
+  }
+}
