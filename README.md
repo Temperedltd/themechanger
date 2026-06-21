@@ -2,24 +2,21 @@
 
 Version: 0.1.0
 
-Theme Changer is a WordPress utility plugin for rendering selected content with a different installed theme from the active site theme.
+Theme Changer is a WordPress utility plugin for changing the theme for selected content with a different installed theme then from the active site theme.
 
-This means a site can keep one active theme while using another installed theme for selected posts, pages, products, custom post types, or taxonomy archives.
+This means a site can keep one active theme while using another (or go crazy and have many) installed theme(s) for selected posts, pages, products, custom post types, or taxonomy archives.
 
 ## Requirements
 
 - WordPress 7.0 or later.
 - PHP 8.2 or later.
 - At least one additional installed and allowed theme.
-- The `switch_themes` capability to manage default theme selections.
 
 ## Why
 
-WordPress normally treats the active theme as a site-wide decision. That is usually the right model, but it is limiting when a site needs a specific section, campaign, product area, or archive to render with a different theme without moving it to a separate WordPress install.
+WordPress by default has a single active theme at one time, if you change the theme it occurs sitewide. Theme Changer was born after a need to perform a slow migration from a classic theme to a FSE based solution with parts of the site on the old theme and parts on the new. However it can work for a range of scenarios, separating different brands, campaigns or teams.
 
-Theme Changer keeps that decision inside WordPress. Editors can choose a theme for individual supported content, and administrators can set sensible defaults by post type.
-
-The plugin is intentionally conservative. It only offers installed themes WordPress reports as available for the current site, and it falls back safely when a stored theme is missing, deleted, or no longer allowed.
+Editors can choose a theme for individual supported content as long as they also have the ability to select a theme, and administrators can set defaults by post type.
 
 ## What It Does
 
