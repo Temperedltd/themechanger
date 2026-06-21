@@ -10,7 +10,7 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ### Added
 
-- Initial development release of Tempered Theme Changer.
+- Initial development release of Theme Changer.
 - Per-post, page, public custom post type, and WooCommerce product theme overrides.
 - Public taxonomy term archive theme overrides within documented runtime limits.
 - Default theme selection by public post type under Appearance > Theme Changer.

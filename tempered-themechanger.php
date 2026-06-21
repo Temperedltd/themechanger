@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: Tempered Themechanger
+ * Plugin Name: Theme Changer
  * Description: Render selected WordPress content with a different installed theme.
  * Version: 0.1.0
  * Requires at least: 7.0
  * Requires PHP: 8.2
- * Author: Tempered
+ * Author: Tempered Ltd
  * Text Domain: tempered-themechanger
  * Domain Path: /languages
  *

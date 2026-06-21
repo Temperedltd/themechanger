@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<ruleset name="Tempered Themechanger">
-  <description>WordPress coding standards for the Tempered Themechanger plugin.</description>
+<ruleset name="Theme Changer">
+  <description>WordPress coding standards for the Theme Changer plugin.</description>
 
   <file>.</file>
 

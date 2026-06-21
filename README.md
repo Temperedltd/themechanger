@@ -1,8 +1,8 @@
-# Tempered Themechanger
+# Theme Changer
 
 Version: 0.1.0
 
-Tempered Themechanger is a WordPress utility plugin for rendering selected content with a different installed theme from the active site theme.
+Theme Changer is a WordPress utility plugin for rendering selected content with a different installed theme from the active site theme.
 
 This means a site can keep one active theme while using another installed theme for selected posts, pages, products, custom post types, or taxonomy archives.
 
@@ -17,7 +17,7 @@ This means a site can keep one active theme while using another installed theme 
 
 WordPress normally treats the active theme as a site-wide decision. That is usually the right model, but it is limiting when a site needs a specific section, campaign, product area, or archive to render with a different theme without moving it to a separate WordPress install.
 
-Tempered Themechanger keeps that decision inside WordPress. Editors can choose a theme for individual supported content, and administrators can set sensible defaults by post type.
+Theme Changer keeps that decision inside WordPress. Editors can choose a theme for individual supported content, and administrators can set sensible defaults by post type.
 
 The plugin is intentionally conservative. It only offers installed themes WordPress reports as available for the current site, and it falls back safely when a stored theme is missing, deleted, or no longer allowed.
 
@@ -46,7 +46,7 @@ Editor theme changes use save and preview refresh behaviour for the first releas
 ## Installation
 
 1. Copy the plugin directory to `wp-content/plugins/tempered-themechanger`.
-2. Activate Tempered Themechanger in WordPress.
+2. Activate Theme Changer in WordPress.
 3. Go to Appearance > Theme Changer to configure default themes by post type.
 4. Edit supported posts, pages, products, custom post type items, or taxonomy terms to add individual theme overrides.
 

@@ -1,6 +1,6 @@
 {
     "name": "tempered/themechanger",
-    "description": "A WordPress plugin workspace for Tempered Themechanger.",
+    "description": "A WordPress plugin workspace for Theme Changer.",
     "type": "wordpress-plugin",
     "license": "proprietary",
     "require": {
